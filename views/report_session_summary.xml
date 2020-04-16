@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+<template id="report_session_summary">
+    <t t-call="web.html_container">
+        <t t-foreach="docs" t-as="o">
+            <t t-call="web.external_layout">
+                <div class="page">
+                    <h2>Session Summary: <span t-field="o.name"/></h2>
+
+                    <div class="row mt32 mb32">
+                        <div class="col-auto mw-100 mb-3">
+                            <strong>Responsible</strong>:<br/>
+                            <span t-field="o.user_id"/>
+                        </div>
+                        <div class="col-auto mw-100 mb-3">
+                            <strong>Point of Sale</strong>:<br/>
+                            <span t-field="o.config_id"/>
+                        </div>
+                        <div class="col-auto mw-100 mb-3">
+                            <strong>Opening Date</strong>:<br/>
+                            <span t-field="o.start_at"/>
+                        </div>
+                        <div class="col-auto mw-100 mb-3">
+                            <strong>Closing Date</strong>:<br/>
+                            <span t-field="o.stop_at"/>
+                        </div>
+                    </div>
+
+                    <h4>Statement Summary</h4>
+                    <t t-set="total_transaccion" t-value="0" style="text-align: right;"/>
+					<t t-set="total_balance" t-value="0" style="text-align: right;"/>
+                    <table class="table table-sm o_main_table colspan--on">
+                        <thead>
+                            <tr>
+                               <!-- <th>
+                                    <strong>Reference</strong>
+                                </th> -->
+                                <th>
+                                    <strong>Journal</strong>
+                                </th>
+                                <th class="text-right">
+                                    <strong>Starting Balance</strong>
+                                </th>
+                                <th class="text-right">
+                                    <strong>Total Transactions</strong>
+                                </th>
+                                <th class="text-right">
+                                    <strong>Ending Balance</strong>
+                                </th>
+                                <th class="text-right">
+                                    <strong>Difference</strong>
+                                </th>
+                                <th class="text-right" groups="base.group_multi_currency">
+                                    <strong>Currency</strong>
+                                </th>
+                                <th class="text-right">
+                                    <strong>Status</strong>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+			    <tr t-foreach="o.statement_ids" t-as="statement">
+				<t t-set="total_entry_encoding" t-value="statement.total_entry_encoding"/>
+				<t t-set="balance_end_real" t-value="statement.balance_end_real"/>
+				    
+				<t t-foreach="list_payment" t-as="l">
+				   <t t-if="statement.journal_id.id == l['journal'] ">
+				      <t t-set="total_entry_encoding" t-value="l['amount'] + statement.total_entry_encoding"/>
+				      <t t-set="balance_end_real" t-value="l['amount'] + statement.balance_end_real"/>
+				   </t>
+				</t>
+                                <!--<td><span t-field="statement.name"/></td> -->
+				<t t-set="currency_id" t-value="0" style="statement.currency_id"/>
+                                <td><span t-field="statement.journal_id"/></td>
+				<td class="text-right">
+					 <span t-field="statement.balance_start"
+					t-field-options='{"widget": "monetary", "display_currency": "statement.currency_id"}'/> 
+                                </td>
+                                <td class="text-right">
+					
+					<!--<t t-set="total_transaccion" t-value="total_transaccion + statement.total_entry_encoding "/>-->
+				    <t t-set="total_transaccion" t-value="total_transaccion + total_entry_encoding"/>
+				    <t t-esc="total_entry_encoding"  t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/>
+				    <!--<span t-field="statement.total_entry_encoding"
+					    t-field-options='{"widget": "monetary", "display_currency": "statement.currency_id"}'/> -->
+                                </td>
+                                <td class="text-right">
+				    <t t-set="total_balance" t-value="total_balance + balance_end_real"/>
+				    <t t-esc="balance_end_real"  t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/>
+				    <!-- <span t-field="statement.balance_end_real"
+					t-field-options='{"widget": "monetary", "display_currency": "statement.currency_id"}'/>-->
+                                </td>
+                                <td class="text-right">
+                                    <span t-field="statement.difference"
+                                        t-field-options='{"widget": "monetary", "display_currency": "statement.currency_id"}'/>
+                                </td>
+                                <td class="text-right" groups="base.group_multi_currency">
+                                    <span t-field="statement.currency_id"/>
+                                </td>
+                                <td class="text-right"><span t-field="statement.state"/></td>
+                            </tr>
+				<tr> 
+				   <td class="text-right"><strong>Total</strong> </td>
+				   <td class="text-right" colspan="2">
+				      <strong><span t-esc="total_transaccion" t-options="{'widget': 'monetary', 'display_currency': o.currency_id}" /></strong></td>							   
+			     </tr>
+                        </tbody>
+                    </table>
+		    
+		    <t t-foreach="missing_journal" t-as="statement">
+                        <h4>Statement Details: <span t-esc="statement['name']"/></h4>
+                        <t t-set="total_journal_balance" t-value="0" style="text-align: right;"/>
+                        <table class="table table-sm o_main_table">
+                            <thead>
+                                <tr>
+				    <th>Diario</th>
+                                    <th>Date</th>
+                                    <th>Description</th>
+                                    <th>Reference</th>
+                                    <th>Partner</th>
+                                    <th>Account</th>
+                                    <th class="text-right">Amount</th>
+                                </tr>
+                            </thead>
+			    <tbody>
+				<tr t-foreach="list_invoice" t-as="l">
+				   <t t-if="statement['journal'] == l['journal_id'] ">
+				     <td><t t-esc="l['journal_name']"/></td>
+                                     <td><t t-esc="l['date']"/></td>
+                                     <td><span t-field="o.name"/></td>
+                                     <td><t t-esc="l['ref']"/></td> 
+                                     <td><t t-esc="l['partner_id']"/></td>
+                                     <td><t t-esc="l['account_id']"/></td>
+                                     <td class="text-right">
+				     <t t-set="total_journal_balance" t-value="total_journal_balance + l['amount']"/>
+				        <t t-esc="l['amount']" t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/>
+				     </td>
+				   </t>
+				</tr> 
+				<tr> 
+			            <td class="text-right"><strong>Total</strong> </td>
+				   <td class="text-right" colspan="7"><strong><span t-esc="total_journal_balance"
+				      t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/></strong>
+				  </td>							   
+			        </tr>
+                           </tbody>
+		        </table>	   
+		    </t>
+                    <t t-foreach="o.statement_ids" t-as="statement">
+                        <h4 t-if="statement.line_ids">Statement Details: <span t-esc="statement.journal_id.name"/></h4>
+                        <t t-set="total_journal_balance" t-value="0" style="text-align: right;"/>
+                        <table class="table table-sm o_main_table" t-if="statement.line_ids">
+                            <thead>
+                                <tr>
+				    <th>Diario</th>
+                                    <th>Date</th>
+                                    <th>Description</th>
+                                    <th>Reference</th>
+                                    <th>Partner</th>
+                                    <th>Account</th>
+                                    <th class="text-right">Amount</th>
+                                </tr>
+                            </thead>
+			    <tbody>
+			        <tr t-foreach="statement.line_ids" t-as="line">
+				    <td><span t-field="line.journal_id"/></td>
+                                    <td><span t-field="line.date"/></td>
+                                    <td><span t-field="line.name"/></td>
+                                    <td><span t-field="line.ref"/></td> 
+                                    <td><span t-field="line.partner_id"/></td>
+                                    <td><span t-field="line.account_id"/></td>
+                                    <td class="text-right">
+					<t t-set="total_journal_balance" t-value="total_journal_balance + line.amount"/>
+                                        <span t-field="line.amount" t-field-options='{"widget": "monetary", "display_currency": "statement.currency_id"}'/>
+				    </td>
+                                </tr>
+				<tr t-foreach="list_invoice" t-as="l">
+				   <t t-if="statement.journal_id.id == l['journal_id'] ">
+				     <td><t t-esc="l['journal_name']"/></td>
+                                     <td><span t-field="statement.date"/></td>
+                                     <td><span t-field="statement.name"/></td>
+                                     <td><t t-esc="l['ref']"/></td> 
+                                     <td><t t-esc="l['partner_id']"/></td>
+                                     <td><t t-esc="l['account_id']"/></td>
+                                     <td class="text-right">
+				     <t t-set="total_journal_balance" t-value="total_journal_balance + l['amount']"/>
+				        <t t-esc="l['amount']" t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/>
+				     </td>
+				   </t>
+				</tr> 
+				<tr> 
+			            <td class="text-right"><strong>Total</strong> </td>
+				   <td class="text-right" colspan="7"><strong><span t-esc="total_journal_balance"
+				      t-options="{'widget': 'monetary', 'display_currency': statement.currency_id}"/></strong>
+				  </td>							   
+			        </tr>
+                            </tbody>
+		        </table>
+                    </t>					
+	        </div>
+                <br/>
+                <br/>
+		<table class="table-condensed" width="100%">
+		     <tr>
+			 <td class="text-center" style="width:50%;"><span t-esc="40*'_'"/></td>                             
+			 <td class="text-center" style="width:50%;"><span t-esc="40*'_'"/></td>
+                     </tr>
+		     <tr>
+			<td width="50%" class="text-center">
+		 	<strong>Responsable de Caja</strong>
+			</td>
+			<td width="50%" class="text-center">
+			<strong>Recibido Por</strong>
+			</td>
+		     </tr>
+		</table>
+	    </t>
+        </t>
+    </t>
+</template>
+</odoo>
